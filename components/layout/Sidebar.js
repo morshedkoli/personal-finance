@@ -9,6 +9,9 @@ import {
   ArrowTrendingDownIcon,
   XMarkIcon,
   TagIcon, // Add this import for the categories icon
+  CalendarIcon, // Add this import for the account/history icon
+  UserCircleIcon, // Add this import for the profile icon
+  Cog6ToothIcon, // Add this import for the settings icon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -19,7 +22,12 @@ const navigation = [
   { name: 'Expenses', href: '/dashboard/expenses', icon: ArrowTrendingDownIcon },
   { name: 'Payables', href: '/dashboard/payables', icon: CreditCardIcon },
   { name: 'Receivables', href: '/dashboard/receivables', icon: CurrencyDollarIcon },
-  { name: 'Categories', href: '/dashboard/categories', icon: TagIcon }, // Add this line
+  { name: 'Categories', href: '/dashboard/categories', icon: TagIcon },
+];
+
+const accountNavigation = [
+  { name: 'History', href: '/history', icon: CalendarIcon },
+  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
@@ -43,6 +51,38 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           <li>
             <ul role="list" className="space-y-1">
               {navigation.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`
+                        group flex items-center gap-x-3 rounded-lg py-2.5 px-3 text-sm font-medium transition-all duration-200
+                        ${isActive
+                          ? 'bg-primary/10 dark:bg-primary/20 text-primary shadow-sm'
+                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/70 hover:text-primary'}
+                      `}
+                    >
+                      <div className={`flex-shrink-0 ${isActive ? 'bg-primary/10 dark:bg-primary/30 p-1.5 rounded-md' : 'p-1.5'}`}>
+                        <item.icon
+                          className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-gray-500 dark:text-gray-400 group-hover:text-primary'}`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+          {/* Account Section */}
+          <li className="mt-8">
+            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 pl-2">
+              Account
+            </div>
+            <ul role="list" className="space-y-1">
+              {accountNavigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.name}>

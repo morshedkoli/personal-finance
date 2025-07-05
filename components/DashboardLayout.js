@@ -25,11 +25,17 @@ export default function DashboardLayout({ children }) {
               © {new Date().getFullYear()} Personal Finance Tracker. All rights reserved.
             </p>
             <div className="flex space-x-4 mt-2 sm:mt-0">
-              <a href="#" className="text-xs text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors">
+              <a href="/privacy-policy" className="text-xs text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors">
                 Privacy Policy
               </a>
-              <a href="#" className="text-xs text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors">
+              <a href="/terms-of-service" className="text-xs text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors">
                 Terms of Service
+              </a>
+              <a href="/documentation" className="text-xs text-green-700 hover:underline ml-2">
+                View Documentation
+              </a>
+              <a href="https://facebook.com/murshedkoli" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline ml-2">
+                Developed by Murshed Al Main
               </a>
             </div>
           </div>
