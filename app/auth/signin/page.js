@@ -4,8 +4,17 @@ import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { Suspense } from 'react';
 
-export default function SignIn() {
+export default function SignInPageWrapper() {
+  return (
+    <Suspense>
+      <SignIn />
+    </Suspense>
+  );
+}
+
+function SignIn() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
