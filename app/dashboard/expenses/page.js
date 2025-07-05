@@ -1,0 +1,237 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ArrowPathIcon } from '@heroicons/react/24/solid';
+import FinanceForm from '@/components/forms/FinanceForm';
+import DataTable from '@/components/tables/DataTable';
+
+export default function ExpensesPage() {
+  const [expenses, setExpenses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(null);
+  const [error, setError] = useState(null);
+
+  const fetchExpenses = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/expenses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch expenses data');
+      }
+      const data = await response.json();
+      setExpenses(data);
+    } catch (err) {
+      console.error('Error fetching expenses:', err);
+      setError('Failed to load expenses data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const handleSubmit = async (formData) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add expense');
+      }
+      
+      const addedExpense = await response.json();
+      setExpenses([addedExpense, ...expenses]);
+    } catch (err) {
+      console.error('Error adding expense:', err);
+      setError('Failed to add expense. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setIsDeleting(id);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/expenses/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete expense');
+      }
+      
+      setExpenses(expenses.filter(expense => expense.id !== id));
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+      setError('Failed to delete expense. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  // Calculate statistics
+  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const thisMonthExpenses = expenses
+    .filter(expense => {
+      const expenseDate = new Date(expense.date);
+      const currentDate = new Date();
+      return expenseDate.getMonth() === currentDate.getMonth() && 
+             expenseDate.getFullYear() === currentDate.getFullYear();
+    })
+    .reduce((sum, expense) => sum + Number(expense.amount), 0);
+
+  // Find largest category
+  const categoryTotals = expenses.reduce((acc, expense) => {
+    const category = expense.category || 'Uncategorized';
+    acc[category] = (acc[category] || 0) + Number(expense.amount);
+    return acc;
+  }, {});
+  
+  const largestCategory = Object.entries(categoryTotals).reduce(
+    (largest, [category, amount]) => {
+      return amount > largest.amount ? { category, amount } : largest;
+    },
+    { category: 'None', amount: 0 }
+  );
+
+  return (
+    <div className="space-y-6">
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Expenses</h1>
+            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+              Track your expenses and manage your spending
+            </p>
+          </div>
+          <button 
+            onClick={fetchExpenses} 
+            className="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            disabled={isLoading}
+          >
+            <ArrowPathIcon className={`-ml-1 mr-2 h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Statistics Cards - Moved to top */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          {/* Total Expenses Card */}
+          <div className="bg-gradient-to-br from-red-500 to-red-600 overflow-hidden shadow-lg rounded-xl text-white">
+            <div className="px-4 py-5 sm:p-6">
+              <dt className="text-sm font-medium text-red-100 truncate">Total Expenses</dt>
+              <dd className="mt-1 text-3xl font-extrabold">
+                ${totalExpenses.toLocaleString()}
+              </dd>
+              <p className="mt-2 text-sm text-red-100">
+                {expenses.length} total entries
+              </p>
+            </div>
+          </div>
+          
+          {/* This Month Expenses Card */}
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 overflow-hidden shadow-lg rounded-xl text-white">
+            <div className="px-4 py-5 sm:p-6">
+              <dt className="text-sm font-medium text-orange-100 truncate">This Month</dt>
+              <dd className="mt-1 text-3xl font-extrabold">
+                ${thisMonthExpenses.toLocaleString()}
+              </dd>
+              <p className="mt-2 text-sm text-orange-100">
+                Current month spending
+              </p>
+            </div>
+          </div>
+          
+          {/* Largest Category Card */}
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 overflow-hidden shadow-lg rounded-xl text-white">
+            <div className="px-4 py-5 sm:p-6">
+              <dt className="text-sm font-medium text-yellow-100 truncate">Largest Category</dt>
+              <dd className="mt-1 text-3xl font-extrabold">
+                {largestCategory.category}
+              </dd>
+              <p className="mt-2 text-sm text-yellow-100">
+                ${largestCategory.amount.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 mb-4">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-400">{error}</h3>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Add Expense Form */}
+          <div>
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Expense</h2>
+                <FinanceForm type="expense" onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Use these actions to manage your expenses efficiently.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={fetchExpenses}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
+                  </button>
+                  <button 
+                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    Export Report
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Expenses Table */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Expense History</h2>
+            <DataTable
+              data={expenses}
+              type="expense"
+              onDelete={handleDelete}
+              isDeleting={isDeleting}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+    </div>
+  );
+}
