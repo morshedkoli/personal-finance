@@ -23,6 +23,7 @@ export default function Dashboard() {
   });
   
   const [isLoading, setIsLoading] = useState(true);
+  const [latestTransactions, setLatestTransactions] = useState([]);
 
   // Function to fetch dashboard data
   const fetchDashboardData = async () => {
@@ -37,6 +38,7 @@ export default function Dashboard() {
       const data = await response.json();
       setStats(data.stats);
       setMonthlyData(data.monthlyData);
+      setLatestTransactions(data.latestTransactions || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       // Fallback to default values if API call fails
@@ -52,6 +54,7 @@ export default function Dashboard() {
         income: [],
         expenses: [],
       });
+      setLatestTransactions([]);
     } finally {
       setIsLoading(false);
     }
@@ -246,7 +249,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - move to top */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
@@ -329,6 +332,41 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Latest Transactions Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Latest Transactions</h2>
+          {latestTransactions.length === 0 ? (
+            <div className="text-gray-500 dark:text-gray-400">No recent transactions found.</div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {latestTransactions.map((tx, idx) => (
+                <li key={tx.id || idx} className="py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className={
+                      tx.type === 'income' ? 'text-primary' :
+                      tx.type === 'expense' ? 'text-red-600 dark:text-red-400' :
+                      tx.type === 'payable' ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-green-600 dark:text-green-400'
+                    }>
+                      {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {tx.name || tx.title || tx.description || 'Untitled'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-gray-700 dark:text-gray-200 font-semibold">
+                      {tx.amount ? `$${tx.amount.toLocaleString()}` : ''}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {tx.date ? new Date(tx.date).toLocaleDateString() : ''}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         {/* Charts */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">

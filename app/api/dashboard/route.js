@@ -79,6 +79,32 @@ export async function GET(request) {
       monthlyExpenses.unshift(monthExpenseTotal);
     }
 
+    // Combine all transactions and sort by date descending
+    const allTransactions = [
+      ...incomes.map(tx => ({
+        ...tx,
+        type: 'income',
+        date: tx.date || tx.createdAt
+      })),
+      ...expenses.map(tx => ({
+        ...tx,
+        type: 'expense',
+        date: tx.date || tx.createdAt
+      })),
+      ...payables.map(tx => ({
+        ...tx,
+        type: 'payable',
+        date: tx.dueDate || tx.createdAt
+      })),
+      ...receivables.map(tx => ({
+        ...tx,
+        type: 'receivable',
+        date: tx.dueDate || tx.createdAt
+      })),
+    ];
+    allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latestTransactions = allTransactions.slice(0, 5);
+
     return NextResponse.json({
       stats: {
         totalIncome,
@@ -91,6 +117,7 @@ export async function GET(request) {
         income: monthlyIncome,
         expenses: monthlyExpenses,
       },
+      latestTransactions,
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
