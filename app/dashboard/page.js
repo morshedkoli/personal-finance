@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowPathIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
+import { CurrencyDollarIcon, ChartPieIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
@@ -227,19 +228,25 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Financial Overview</h1>
+    <div className="space-y-8">
+        <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center">
+            <ChartPieIcon className="w-8 h-8 text-primary mr-3" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Dashboard</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Track your finances at a glance</p>
+            </div>
+          </div>
           <div className="flex items-center space-x-4">
             {isLoading ? (
-              <div className="flex items-center text-gray-500 dark:text-gray-400">
-                <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
-                <span>Loading data...</span>
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300">
+                <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin text-primary" />
+                <span>Updating...</span>
               </div>
             ) : (
               <button
                 onClick={fetchDashboardData}
-                className="flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 text-primary px-4 py-2 rounded-lg transition-all duration-200 font-medium"
                 title="Refresh data"
               >
                 <ArrowPathIcon className="w-5 h-5 mr-2" />
@@ -249,34 +256,42 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid - move to top */}
+        {/* Stats Grid - Financial Summary Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          {/* Income Card */}
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:border-primary/30 dark:hover:border-primary/30">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="bg-primary/10 dark:bg-primary/20 rounded-md p-3">
-                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-4">
+                    <CurrencyDollarIcon className="w-7 h-7 text-primary" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Income</dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">${stats.totalIncome.toLocaleString()}</dd>
+                    <dd className="flex items-baseline">
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">${stats.totalIncome.toLocaleString()}</span>
+                      <span className="ml-2 text-sm font-medium text-green-600 dark:text-green-400">
+                        <ArrowDownIcon className="h-4 w-4 rotate-180 inline" />
+                      </span>
+                    </dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div className="bg-primary/5 dark:bg-primary/10 px-6 py-2">
+              <div className="text-xs text-primary/80 font-medium">All time earnings</div>
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          {/* Expenses Card */}
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:border-red-300 dark:hover:border-red-700">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="bg-red-100 dark:bg-red-900/30 rounded-md p-3">
-                    <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-red-100 dark:bg-red-900/30 rounded-xl p-4">
+                    <svg className="w-7 h-7 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -284,39 +299,52 @@ export default function Dashboard() {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Expenses</dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">${stats.totalExpenses.toLocaleString()}</dd>
+                    <dd className="flex items-baseline">
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">${stats.totalExpenses.toLocaleString()}</span>
+                      <span className="ml-2 text-sm font-medium text-red-600 dark:text-red-400">
+                        <ArrowDownIcon className="h-4 w-4 inline" />
+                      </span>
+                    </dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div className="bg-red-50 dark:bg-red-900/20 px-6 py-2">
+              <div className="text-xs text-red-600/80 dark:text-red-400/80 font-medium">All time spending</div>
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          {/* Payables Card */}
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:border-yellow-300 dark:hover:border-yellow-700">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="bg-yellow-100 dark:bg-yellow-900/30 rounded-md p-3">
-                    <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 rounded-xl p-4">
+                    <CalendarIcon className="w-7 h-7 text-yellow-600 dark:text-yellow-400" />
                   </div>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Payables</dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">${stats.totalPayables.toLocaleString()}</dd>
+                    <dd className="flex items-baseline">
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">${stats.totalPayables.toLocaleString()}</span>
+                    </dd>
                   </dl>
                 </div>
               </div>
             </div>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 px-6 py-2">
+              <div className="text-xs text-yellow-600/80 dark:text-yellow-400/80 font-medium">Outstanding payments</div>
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          {/* Receivables Card */}
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:border-green-300 dark:hover:border-green-700">
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="bg-green-100 dark:bg-green-900/30 rounded-md p-3">
-                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-green-100 dark:bg-green-900/30 rounded-xl p-4">
+                    <svg className="w-7 h-7 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -324,60 +352,137 @@ export default function Dashboard() {
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Receivables</dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">${stats.totalReceivables.toLocaleString()}</dd>
+                    <dd className="flex items-baseline">
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">${stats.totalReceivables.toLocaleString()}</span>
+                    </dd>
                   </dl>
                 </div>
               </div>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 px-6 py-2">
+              <div className="text-xs text-green-600/80 dark:text-green-400/80 font-medium">Expected income</div>
             </div>
           </div>
         </div>
 
         {/* Latest Transactions Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Latest Transactions</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <div className="flex items-center">
+              <CalendarIcon className="w-5 h-5 text-primary mr-2" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Latest Transactions</h2>
+            </div>
+            <span className="text-xs font-medium px-2.5 py-1 bg-primary/10 text-primary rounded-full">
+              Last 5 transactions
+            </span>
+          </div>
+          
           {latestTransactions.length === 0 ? (
-            <div className="text-gray-500 dark:text-gray-400">No recent transactions found.</div>
+            <div className="p-8 text-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
+                <CalendarIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+              </div>
+              <h3 className="text-gray-900 dark:text-white font-medium mb-1">No transactions yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Your recent transactions will appear here</p>
+            </div>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {latestTransactions.map((tx, idx) => (
-                <li key={tx.id || idx} className="py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={
-                      tx.type === 'income' ? 'text-primary' :
-                      tx.type === 'expense' ? 'text-red-600 dark:text-red-400' :
-                      tx.type === 'payable' ? 'text-yellow-600 dark:text-yellow-400' :
-                      'text-green-600 dark:text-green-400'
-                    }>
-                      {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
-                    </span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {tx.name || tx.title || tx.description || 'Untitled'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-gray-700 dark:text-gray-200 font-semibold">
-                      {tx.amount ? `$${tx.amount.toLocaleString()}` : ''}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {tx.date ? new Date(tx.date).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                </li>
-              ))}
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+              {latestTransactions.map((tx, idx) => {
+                // Determine icon and color based on transaction type
+                const getTypeStyles = (type) => {
+                  switch(type) {
+                    case 'income':
+                      return {
+                        bgColor: 'bg-primary/10 dark:bg-primary/20',
+                        textColor: 'text-primary',
+                        icon: <ArrowDownIcon className="h-4 w-4 rotate-180" />
+                      };
+                    case 'expense':
+                      return {
+                        bgColor: 'bg-red-100 dark:bg-red-900/30',
+                        textColor: 'text-red-600 dark:text-red-400',
+                        icon: <ArrowDownIcon className="h-4 w-4" />
+                      };
+                    case 'payable':
+                      return {
+                        bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
+                        textColor: 'text-yellow-600 dark:text-yellow-400',
+                        icon: <CalendarIcon className="h-4 w-4" />
+                      };
+                    case 'receivable':
+                      return {
+                        bgColor: 'bg-green-100 dark:bg-green-900/30',
+                        textColor: 'text-green-600 dark:text-green-400',
+                        icon: <CurrencyDollarIcon className="h-4 w-4" />
+                      };
+                    default:
+                      return {
+                        bgColor: 'bg-gray-100 dark:bg-gray-700',
+                        textColor: 'text-gray-600 dark:text-gray-400',
+                        icon: <CurrencyDollarIcon className="h-4 w-4" />
+                      };
+                  }
+                };
+                
+                const typeStyle = getTypeStyles(tx.type);
+                
+                return (
+                  <li key={tx.id || idx} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`${typeStyle.bgColor} p-2 rounded-lg ${typeStyle.textColor}`}>
+                          {typeStyle.icon}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {tx.name || tx.title || tx.description || 'Untitled'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)} • {tx.date ? new Date(tx.date).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`font-bold ${typeStyle.textColor}`}>
+                        {tx.type === 'expense' || tx.type === 'payable' ? '- ' : '+ '}
+                        {tx.amount ? `$${tx.amount.toLocaleString()}` : ''}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
+          
+          {latestTransactions.length > 0 && (
+            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-750 border-t border-gray-100 dark:border-gray-700">
+              <a href="#" className="text-primary text-sm font-medium hover:text-primary/80 transition-colors flex items-center justify-center">
+                View all transactions
+              </a>
+            </div>
+          )}
         </div>
-        {/* Charts */}
+        {/* Charts Section */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Financial Distribution</h2>
-            <div className="aspect-w-16 aspect-h-9">
+          {/* Pie Chart */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center mb-6">
+              <ChartPieIcon className="w-5 h-5 text-primary mr-2" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Financial Distribution</h2>
+            </div>
+            <div className="aspect-w-16 aspect-h-9 p-2">
               <Pie data={pieData} options={pieOptions} />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <div className="aspect-w-16 aspect-h-9">
+          {/* Bar Chart */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center mb-6">
+              <svg className="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Monthly Income vs Expenses</h2>
+            </div>
+            <div className="aspect-w-16 aspect-h-9 p-2">
               <Bar options={barOptions} data={barData} />
             </div>
           </div>

@@ -27,35 +27,58 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
   const sidebarContent = (
     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-6 pb-4">
-      <div className="flex h-16 shrink-0 items-center">
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">Finance Tracker</span>
+      <div className="flex h-16 shrink-0 items-center mt-2">
+        <div className="flex items-center">
+          <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg mr-2">
+            <CurrencyDollarIcon className="h-6 w-6 text-primary" aria-hidden="true" />
+          </div>
+          <span className="text-2xl font-bold text-gray-900 dark:text-white">Finance Tracker</span>
+        </div>
       </div>
-      <nav className="flex flex-1 flex-col">
-        <ul role="list" className="flex flex-1 flex-col gap-y-7">
+      <nav className="flex flex-1 flex-col mt-2">
+        <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4 pl-2">
+          Main Menu
+        </div>
+        <ul role="list" className="flex flex-1 flex-col gap-y-1">
           <li>
-            <ul role="list" className="-mx-2 space-y-1">
-              {navigation.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`
-                      group flex gap-x-3 rounded-md p-2 text-sm leading-6
-                      ${pathname === item.href
-                        ? 'bg-gray-50 dark:bg-gray-700 text-primary'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-primary'}
-                    `}
-                  >
-                    <item.icon
-                      className={`h-6 w-6 shrink-0 ${pathname === item.href ? 'text-primary' : 'text-gray-400 dark:text-gray-400 group-hover:text-primary'}`}
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
+            <ul role="list" className="space-y-1">
+              {navigation.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`
+                        group flex items-center gap-x-3 rounded-lg py-2.5 px-3 text-sm font-medium transition-all duration-200
+                        ${isActive
+                          ? 'bg-primary/10 dark:bg-primary/20 text-primary shadow-sm'
+                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/70 hover:text-primary'}
+                      `}
+                    >
+                      <div className={`flex-shrink-0 ${isActive ? 'bg-primary/10 dark:bg-primary/30 p-1.5 rounded-md' : 'p-1.5'}`}>
+                        <item.icon
+                          className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-gray-500 dark:text-gray-400 group-hover:text-primary'}`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </li>
         </ul>
+        
+        <div className="mt-auto pt-6 pb-4">
+          <div className="rounded-lg bg-primary/5 dark:bg-primary/10 p-4">
+            <h3 className="text-sm font-medium text-primary mb-2">Need Help?</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">Check our documentation for tips on managing your finances effectively.</p>
+            <a href="#" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+              View Documentation →
+            </a>
+          </div>
+        </div>
       </nav>
     </div>
   );
