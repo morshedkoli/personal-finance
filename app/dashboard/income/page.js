@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import FinanceForm from '@/components/forms/FinanceForm';
 import DataTable from '@/components/tables/DataTable';
+import { useNotification } from '@/components/notifications/NotificationProvider';
 
 export default function IncomePage() {
+  const { showSuccess, showError } = useNotification();
   const [incomes, setIncomes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +25,9 @@ export default function IncomePage() {
       const data = await response.json();
       setIncomes(data);
     } catch (err) {
-      console.error('Error fetching income:', err);
+      showError('Failed to load income data. Please refresh the page or check your connection.', {
+        title: 'Loading Error'
+      });
       setError('Failed to load income data. Please try again.');
     } finally {
       setIsLoading(false);
@@ -54,8 +58,14 @@ export default function IncomePage() {
       
       const addedIncome = await response.json();
       setIncomes([addedIncome, ...incomes]);
+      
+      showSuccess(`Income of $${addedIncome.amount.toLocaleString()} added successfully!`, {
+        title: 'Income Added'
+      });
     } catch (err) {
-      console.error('Error adding income:', err);
+      showError(`Failed to add income: ${err.message}`, {
+        title: 'Add Failed'
+      });
       setError('Failed to add income. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -76,9 +86,16 @@ export default function IncomePage() {
         throw new Error(errorData.error || 'Failed to delete income');
       }
       
+      const deletedIncome = incomes.find(income => income.id === id);
       setIncomes(incomes.filter(income => income.id !== id));
+      
+      showSuccess(`Income record of $${deletedIncome?.amount?.toLocaleString() || 'N/A'} deleted successfully!`, {
+        title: 'Income Deleted'
+      });
     } catch (err) {
-      console.error('Error deleting income:', err);
+      showError(`Failed to delete income: ${err.message}`, {
+        title: 'Delete Failed'
+      });
       setError('Failed to delete income. Please try again.');
     } finally {
       setIsDeleting(null);

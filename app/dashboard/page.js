@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowPathIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
 import { CurrencyDollarIcon, ChartPieIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { useNotification } from '@/components/notifications/NotificationProvider';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
@@ -10,6 +11,7 @@ import { Pie, Bar } from 'react-chartjs-2';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 export default function Dashboard() {
+  const { showError, showSuccess } = useNotification();
   const [stats, setStats] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -50,7 +52,9 @@ export default function Dashboard() {
       setMonthlyData(data.monthlyData);
       setLatestTransactions(data.latestTransactions || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      showError('Failed to load dashboard data. Please refresh the page or check your connection.', {
+        title: 'Loading Error'
+      });
       // Fallback to default values if API call fails
       setStats({
         totalIncome: 0,

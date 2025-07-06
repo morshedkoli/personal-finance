@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon, FolderIcon, CalendarIcon, UserGroupIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon, XMarkIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useNotification } from '@/components/notifications/NotificationProvider';
 
 function ProjectsContent() {
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [editingPayment, setEditingPayment] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
   const [newProject, setNewProject] = useState({
     name: '',
@@ -37,10 +41,10 @@ function ProjectsContent() {
         const data = await response.json();
         setProjects(data);
       } else {
-        console.error('Failed to fetch projects');
+        showError('Failed to fetch projects. Please try again.');
       }
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      showError('Error loading projects. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -98,12 +102,27 @@ function ProjectsContent() {
           paidAmount: ''
         });
         setShowCreateForm(false);
+        
+        // Show success notification
+        if (project.status === 'completed' && project.budget > 0 && project.cost > 0) {
+          showSuccess(`Project "${project.name}" created and income generated successfully!`, {
+            title: 'Project Created'
+          });
+        } else {
+          showSuccess(`Project "${project.name}" created successfully!`, {
+            title: 'Project Created'
+          });
+        }
       } else {
         const errorData = await response.json();
-        alert(`Error creating project: ${errorData.error}${errorData.details ? '\n' + errorData.details : ''}`);
+        showError(`Failed to create project: ${errorData.error}${errorData.details ? ' - ' + errorData.details : ''}`, {
+          title: 'Creation Failed'
+        });
       }
     } catch (error) {
-      console.error('Error creating project:', error);
+      showError('Failed to create project. Please check your connection and try again.', {
+        title: 'Network Error'
+      });
     }
   };
 
@@ -172,11 +191,32 @@ function ProjectsContent() {
       if (response.ok) {
         // Refresh projects list
         fetchProjects();
+        
+        // Show appropriate notification based on status change
+        if (newStatus !== project.status) {
+          if (newStatus === 'due') {
+            showWarning(`Payment updated. Project "${project.name}" status changed to Due (payment required).`, {
+              title: 'Payment Updated'
+            });
+          } else if (newStatus === 'in-progress') {
+            showSuccess(`Payment completed! Project "${project.name}" is now fully paid and back in progress.`, {
+              title: 'Payment Completed'
+            });
+          }
+        } else {
+          showSuccess(`Payment amount updated for project "${project.name}".`, {
+            title: 'Payment Updated'
+          });
+        }
       } else {
-        console.error('Failed to update paid amount');
+        showError('Failed to update payment amount. Please try again.', {
+          title: 'Update Failed'
+        });
       }
     } catch (error) {
-      console.error('Error updating paid amount:', error);
+      showError('Error updating payment. Please check your connection.', {
+        title: 'Network Error'
+      });
     }
   };
 
@@ -187,7 +227,10 @@ function ProjectsContent() {
       
       // Check if full payment has been made
       if (project.paidAmount < project.budget) {
-        alert(`Cannot complete project. Payment required: $${(project.budget - project.paidAmount).toLocaleString()} remaining of $${project.budget.toLocaleString()} total budget.`);
+        showWarning(`Cannot complete project. Payment required: $${(project.budget - project.paidAmount).toLocaleString()} remaining of $${project.budget.toLocaleString()} total budget.`, {
+          title: 'Payment Required',
+          duration: 8000
+        });
         return;
       }
       
@@ -222,11 +265,27 @@ function ProjectsContent() {
         
         // Refresh projects list
         fetchProjects();
+        
+        // Show success notification
+        if (!project.incomeGenerated && project.budget > 0 && project.cost > 0) {
+          showSuccess(`Project "${project.name}" completed successfully and income generated!`, {
+            title: 'Project Completed',
+            duration: 6000
+          });
+        } else {
+          showSuccess(`Project "${project.name}" marked as completed!`, {
+            title: 'Project Completed'
+          });
+        }
       } else {
-        console.error('Failed to mark project as completed');
+        showError('Failed to complete project. Please try again.', {
+          title: 'Completion Failed'
+        });
       }
     } catch (error) {
-      console.error('Error marking project completed:', error);
+      showError('Error completing project. Please check your connection.', {
+        title: 'Network Error'
+      });
     }
   };
 
@@ -253,20 +312,66 @@ function ProjectsContent() {
         fetchProjects();
         setShowUpdateForm(false);
         setEditingProject(null);
+        
+        showSuccess(`Project "${editingProject.name}" updated successfully!`, {
+          title: 'Project Updated'
+        });
       } else {
-        console.error('Failed to update project');
+        showError('Failed to update project. Please try again.', {
+          title: 'Update Failed'
+        });
       }
     } catch (error) {
-      console.error('Error updating project:', error);
+      showError('Error updating project. Please check your connection.', {
+        title: 'Network Error'
+      });
+    }
+  };
+
+  const handlePaymentUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const updateData = {
+        paidAmount: parseFloat(editingPayment.paidAmount) || 0
+      };
+      
+      const response = await fetch(`/api/projects/${editingPayment.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+      
+      if (response.ok) {
+        // Refresh projects list
+        fetchProjects();
+        setShowPaymentForm(false);
+        setEditingPayment(null);
+        
+        showSuccess(`Payment amount updated to $${updateData.paidAmount.toLocaleString()}!`, {
+          title: 'Payment Updated'
+        });
+      } else {
+        showError('Failed to update payment amount. Please try again.', {
+          title: 'Update Failed'
+        });
+      }
+    } catch (error) {
+      showError('Error updating payment. Please check your connection.', {
+        title: 'Network Error'
+      });
     }
   };
 
   const openUpdateForm = (project) => {
-    if (project.status === 'completed') {
-      return; // Prevent editing completed projects
+    if (project.status === 'completed' || project.status === 'due') {
+      setEditingPayment(project);
+      setShowPaymentForm(true);
+    } else {
+      setEditingProject(project);
+      setShowUpdateForm(true);
     }
-    setEditingProject({ ...project });
-    setShowUpdateForm(true);
   };
 
   const getStatusIcon = (status) => {
@@ -311,8 +416,15 @@ function ProjectsContent() {
   };
 
   const filteredProjects = projects.filter(project => {
-    // Filter by tab (active/completed)
-    return activeTab === 'active' ? project.status !== 'completed' : project.status === 'completed';
+    // Filter by tab (active/completed/due)
+    if (activeTab === 'active') {
+      return project.status !== 'completed';
+    } else if (activeTab === 'completed') {
+      return project.status === 'completed';
+    } else if (activeTab === 'due') {
+      return (project.paidAmount || 0) < (project.budget || 0);
+    }
+    return true;
   });
 
   const projectStats = {
@@ -325,7 +437,8 @@ function ProjectsContent() {
     totalCost: projects.reduce((sum, p) => sum + (p.cost || 0), 0),
     totalRevenue: projects.filter(p => p.status === 'completed').reduce((sum, p) => sum + ((p.budget || 0) - (p.cost || 0)), 0),
     totalPaidAmount: projects.reduce((sum, p) => sum + (p.paidAmount || 0), 0),
-    activeBudget: projects.filter(p => p.status !== 'completed').reduce((sum, p) => sum + (p.budget || 0), 0)
+    activeBudget: projects.filter(p => p.status !== 'completed').reduce((sum, p) => sum + (p.budget || 0), 0),
+    totalDueAmount: projects.filter(p => (p.paidAmount || 0) < (p.budget || 0)).reduce((sum, p) => sum + ((p.budget || 0) - (p.paidAmount || 0)), 0)
   };
 
   if (loading) {
@@ -397,8 +510,9 @@ function ProjectsContent() {
           <div className="flex items-center">
             <CurrencyDollarIcon className="h-8 w-8 text-red-500" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Due</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{projectStats.due}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Due Amount</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">${projectStats.totalDueAmount.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{projectStats.due} projects</p>
             </div>
           </div>
         </div>
@@ -476,6 +590,16 @@ function ProjectsContent() {
           Active Projects ({projects.filter(p => p.status !== 'completed').length})
         </button>
         <button
+          onClick={() => setActiveTab('due')}
+          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'due'
+              ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+          }`}
+        >
+          Due Projects ({projects.filter(p => (p.paidAmount || 0) < (p.budget || 0)).length})
+        </button>
+        <button
           onClick={() => setActiveTab('completed')}
           className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
             activeTab === 'completed'
@@ -490,7 +614,9 @@ function ProjectsContent() {
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map((project) => (
-          <div key={project.id} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow">
+          <div key={project.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow ${
+            project.status === 'due' ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+          }`}>
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
@@ -501,16 +627,35 @@ function ProjectsContent() {
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(project.priority)}`}>
                     {project.priority}
                   </span>
-                  {project.status !== 'completed' && (
+                  {/* Due tag for projects with unpaid amounts */}
+                  {(project.paidAmount || 0) < (project.budget || 0) && (
+                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                      Due
+                    </span>
+                  )}
+                  {/* Payment edit button - only show if payment is not fully completed */}
+                  {((project.status === 'completed' || project.status === 'due') && (project.paidAmount || 0) < (project.budget || 0)) ? (
                     <button
                       onClick={() => openUpdateForm(project)}
-                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="Edit Project"
+                      className={`p-1 text-gray-400 transition-colors ${
+                        project.status === 'due' ? 'hover:text-red-600' : 'hover:text-green-600'
+                      }`}
+                      title="Edit Payment Amount"
                     >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
+                      <CurrencyDollarIcon className="h-4 w-4" />
                     </button>
+                  ) : (project.status !== 'completed' && (project.paidAmount || 0) >= (project.budget || 0)) ? null : (
+                    project.status !== 'completed' && (
+                      <button
+                        onClick={() => openUpdateForm(project)}
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit Project"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -539,18 +684,7 @@ function ProjectsContent() {
                   </span>
                 </div>
                 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Progress:</span>
-                  <div className="flex items-center">
-                    <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-medium">{project.progress}%</span>
-                  </div>
-                </div>
+
                 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Budget:</span>
@@ -569,7 +703,26 @@ function ProjectsContent() {
                   </span>
                 </div>
                 
-
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Cost:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">${project.cost?.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Paid Amount:</span>
+                  <div className="flex items-center">
+                    <span className={`font-medium ${
+                      project.status === 'completed' 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      ${project.paidAmount?.toLocaleString()}
+                    </span>
+                    {project.status === 'completed' && (
+                      <CurrencyDollarIcon className="h-3 w-3 text-green-500 ml-1" />
+                    )}
+                  </div>
+                </div>
 
               </div>
             </div>
@@ -745,6 +898,17 @@ function ProjectsContent() {
               </button>
             </div>
 
+            {editingProject.status === 'completed' && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center">
+                  <CheckCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Project Completed:</strong> Only payment amount can be updated for completed projects.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleUpdateProject} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Name</label>
@@ -752,7 +916,12 @@ function ProjectsContent() {
                   type="text"
                   value={editingProject.name}
                   onChange={(e) => setEditingProject({...editingProject, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  disabled={editingProject.status === 'completed'}
+                  className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                    editingProject.status === 'completed' 
+                      ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                      : 'bg-white dark:bg-gray-700'
+                  }`}
                   required
                 />
               </div>
@@ -762,7 +931,12 @@ function ProjectsContent() {
                 <textarea
                   value={editingProject.description}
                   onChange={(e) => setEditingProject({...editingProject, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  disabled={editingProject.status === 'completed'}
+                  className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                    editingProject.status === 'completed' 
+                      ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                      : 'bg-white dark:bg-gray-700'
+                  }`}
                   rows="3"
                 />
               </div>
@@ -773,7 +947,12 @@ function ProjectsContent() {
                   <select
                     value={editingProject.status}
                     onChange={(e) => setEditingProject({...editingProject, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   >
                     <option value="planning">Planning</option>
                     <option value="in-progress">In Progress</option>
@@ -786,7 +965,12 @@ function ProjectsContent() {
                   <select
                     value={editingProject.priority}
                     onChange={(e) => setEditingProject({...editingProject, priority: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -802,7 +986,12 @@ function ProjectsContent() {
                     type="date"
                     value={editingProject.startDate}
                     onChange={(e) => setEditingProject({...editingProject, startDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
                 
@@ -812,7 +1001,12 @@ function ProjectsContent() {
                     type="date"
                     value={editingProject.endDate}
                     onChange={(e) => setEditingProject({...editingProject, endDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
               </div>
@@ -824,7 +1018,12 @@ function ProjectsContent() {
                       type="number"
                       value={editingProject.budget}
                       onChange={(e) => setEditingProject({...editingProject, budget: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      disabled={editingProject.status === 'completed'}
+                      className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                        editingProject.status === 'completed' 
+                          ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                          : 'bg-white dark:bg-gray-700'
+                      }`}
                     />
                   </div>
                   
@@ -836,7 +1035,12 @@ function ProjectsContent() {
                       max="100"
                       value={editingProject.progress || 0}
                       onChange={(e) => setEditingProject({...editingProject, progress: parseInt(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      disabled={editingProject.status === 'completed'}
+                      className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                        editingProject.status === 'completed' 
+                          ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                          : 'bg-white dark:bg-gray-700'
+                      }`}
                     />
                   </div>
                 </div>
@@ -848,7 +1052,12 @@ function ProjectsContent() {
                     type="text"
                     value={editingProject.agentName || ''}
                     onChange={(e) => setEditingProject({...editingProject, agentName: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
                 
@@ -858,7 +1067,12 @@ function ProjectsContent() {
                     type="tel"
                     value={editingProject.phoneNumber || ''}
                     onChange={(e) => setEditingProject({...editingProject, phoneNumber: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
               </div>
@@ -870,17 +1084,38 @@ function ProjectsContent() {
                     type="number"
                     value={editingProject.cost}
                     onChange={(e) => setEditingProject({...editingProject, cost: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    disabled={editingProject.status === 'completed'}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed' 
+                        ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60' 
+                        : 'bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Paid Amount ($)</label>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    editingProject.status === 'completed' 
+                      ? 'text-green-700 dark:text-green-300' 
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    Paid Amount ($)
+                    {editingProject.status === 'completed' && (
+                      <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
+                        Editable
+                      </span>
+                    )}
+                  </label>
                   <input
                     type="number"
+                    step="0.01"
                     value={editingProject.paidAmount}
-                    onChange={(e) => setEditingProject({...editingProject, paidAmount: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    onChange={(e) => setEditingProject({...editingProject, paidAmount: parseFloat(e.target.value) || 0})}
+                    className={`w-full px-3 py-2 border rounded-lg text-gray-900 dark:text-white ${
+                      editingProject.status === 'completed'
+                        ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-2 focus:ring-green-500 focus:border-green-500'
+                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
+                    }`}
                   />
                 </div>
               </div>
@@ -912,6 +1147,111 @@ function ProjectsContent() {
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Update Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Update Modal for Completed Projects */}
+      {showPaymentForm && editingPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-6 w-6 text-green-500 mr-2" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Update Payment</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPaymentForm(false);
+                  setEditingPayment(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className={`mb-4 p-3 border rounded-lg ${
+              editingPayment.status === 'due' 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            }`}>
+              <div className="flex items-center">
+                <CurrencyDollarIcon className={`h-5 w-5 mr-2 ${
+                  editingPayment.status === 'due' ? 'text-red-500' : 'text-green-500'
+                }`} />
+                <p className={`text-sm ${
+                  editingPayment.status === 'due' 
+                    ? 'text-red-700 dark:text-red-300' 
+                    : 'text-green-700 dark:text-green-300'
+                }`}>
+                  <strong>Project:</strong> {editingPayment.name} ({editingPayment.status === 'due' ? 'Due Payment' : 'Completed'})
+                </p>
+              </div>
+              <div className={`mt-2 text-sm ${
+                editingPayment.status === 'due' 
+                  ? 'text-red-600 dark:text-red-400' 
+                  : 'text-green-600 dark:text-green-400'
+              }`}>
+                <p><strong>Total Cost:</strong> ${editingPayment.cost?.toLocaleString()}</p>
+                <p><strong>Current Paid:</strong> ${editingPayment.paidAmount?.toLocaleString()}</p>
+                <p><strong>Remaining:</strong> ${((editingPayment.cost || 0) - (editingPayment.paidAmount || 0)).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePaymentUpdate} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  editingPayment.status === 'due' 
+                    ? 'text-red-700 dark:text-red-300' 
+                    : 'text-green-700 dark:text-green-300'
+                }`}>
+                  Paid Amount ($)
+                  <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                    editingPayment.status === 'due'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  }`}>
+                    Editable
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={editingPayment.cost}
+                  value={editingPayment.paidAmount || ''}
+                  onChange={(e) => setEditingPayment({...editingPayment, paidAmount: parseFloat(e.target.value) || 0})}
+                  className={`w-full px-3 py-2 border rounded-lg text-gray-900 dark:text-white focus:ring-2 ${
+                    editingPayment.status === 'due'
+                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 focus:border-red-500'
+                      : 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-green-500 focus:border-green-500'
+                  }`}
+                  placeholder="Enter paid amount"
+                  required
+                />
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPaymentForm(false);
+                    setEditingPayment(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                >
+                  <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                  Update Payment
                 </button>
               </div>
             </form>

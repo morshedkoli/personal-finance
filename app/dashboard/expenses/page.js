@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import FinanceForm from '@/components/forms/FinanceForm';
 import DataTable from '@/components/tables/DataTable';
+import { useNotification } from '@/components/notifications/NotificationProvider';
 
 export default function ExpensesPage() {
+  const { showSuccess, showError } = useNotification();
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +25,9 @@ export default function ExpensesPage() {
       const data = await response.json();
       setExpenses(data);
     } catch (err) {
-      console.error('Error fetching expenses:', err);
+      showError('Failed to load expenses data. Please refresh the page or check your connection.', {
+        title: 'Loading Error'
+      });
       setError('Failed to load expenses data. Please try again.');
     } finally {
       setIsLoading(false);
@@ -54,8 +58,14 @@ export default function ExpensesPage() {
       
       const addedExpense = await response.json();
       setExpenses([addedExpense, ...expenses]);
+      
+      showSuccess(`Expense of $${addedExpense.amount.toLocaleString()} added successfully!`, {
+        title: 'Expense Added'
+      });
     } catch (err) {
-      console.error('Error adding expense:', err);
+      showError(`Failed to add expense: ${err.message}`, {
+        title: 'Add Failed'
+      });
       setError('Failed to add expense. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -76,9 +86,16 @@ export default function ExpensesPage() {
         throw new Error(errorData.error || 'Failed to delete expense');
       }
       
+      const deletedExpense = expenses.find(expense => expense.id === id);
       setExpenses(expenses.filter(expense => expense.id !== id));
+      
+      showSuccess(`Expense record of $${deletedExpense?.amount?.toLocaleString() || 'N/A'} deleted successfully!`, {
+        title: 'Expense Deleted'
+      });
     } catch (err) {
-      console.error('Error deleting expense:', err);
+      showError(`Failed to delete expense: ${err.message}`, {
+        title: 'Delete Failed'
+      });
       setError('Failed to delete expense. Please try again.');
     } finally {
       setIsDeleting(null);

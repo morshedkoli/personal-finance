@@ -120,6 +120,79 @@ export async function GET(request) {
         type: 'receivable',
         date: tx.dueDate || tx.createdAt
       })),
+      // Add project activities
+      ...projects.flatMap(project => {
+        const activities = [];
+        
+        // Project creation activity
+        activities.push({
+          id: `${project.id}-created`,
+          name: `Project Created: ${project.name}`,
+          description: `New project "${project.name}" was created with budget $${project.budget?.toLocaleString() || 0}`,
+          type: 'project',
+          subType: 'created',
+          amount: project.budget || 0,
+          date: project.createdAt,
+          status: project.status,
+          priority: project.priority,
+          projectId: project.id,
+          category: 'Project Management'
+        });
+        
+        // Project payment activities (if there are payments)
+        if (project.paidAmount > 0) {
+          activities.push({
+            id: `${project.id}-payment`,
+            name: `Payment Received: ${project.name}`,
+            description: `Received payment of $${project.paidAmount?.toLocaleString() || 0} for project "${project.name}"`,
+            type: 'project',
+            subType: 'payment',
+            amount: project.paidAmount,
+            date: project.updatedAt,
+            status: project.status,
+            priority: project.priority,
+            projectId: project.id,
+            category: 'Project Payment'
+          });
+        }
+        
+        // Project completion activity (if completed)
+        if (project.status === 'completed') {
+          const profit = (project.budget || 0) - (project.cost || 0);
+          activities.push({
+            id: `${project.id}-completed`,
+            name: `Project Completed: ${project.name}`,
+            description: `Project "${project.name}" completed with ${profit >= 0 ? 'profit' : 'loss'} of $${Math.abs(profit).toLocaleString()}`,
+            type: 'project',
+            subType: 'completed',
+            amount: profit,
+            date: project.updatedAt,
+            status: project.status,
+            priority: project.priority,
+            projectId: project.id,
+            category: 'Project Completion'
+          });
+        }
+        
+        // Project status change activities (for overdue projects)
+        if (project.status === 'due') {
+          activities.push({
+            id: `${project.id}-overdue`,
+            name: `Project Overdue: ${project.name}`,
+            description: `Project "${project.name}" is now overdue (deadline: ${new Date(project.endDate).toLocaleDateString()})`,
+            type: 'project',
+            subType: 'overdue',
+            amount: 0,
+            date: project.endDate,
+            status: project.status,
+            priority: project.priority,
+            projectId: project.id,
+            category: 'Project Alert'
+          });
+        }
+        
+        return activities;
+      }),
     ];
     allTransactionsList.sort((a, b) => new Date(b.date) - new Date(a.date));
     const latestTransactions = allTransactionsList.slice(0, 5);
