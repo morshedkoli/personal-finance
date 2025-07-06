@@ -12,6 +12,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/logo.svg" />
+      </head>
       <body className={inter.className}>
         <Providers>
           {children}

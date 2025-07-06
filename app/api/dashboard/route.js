@@ -10,6 +10,9 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const allTransactions = searchParams.get('allTransactions') === 'true';
+
   try {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -20,7 +23,7 @@ export async function GET(request) {
     }
 
     // Get all financial data for the user
-    const [incomes, expenses, payables, receivables] = await Promise.all([
+    const [incomes, expenses, payables, receivables, projects] = await Promise.all([
       prisma.income.findMany({
         where: { userId: user.id },
       }),
@@ -33,13 +36,29 @@ export async function GET(request) {
       prisma.receivable.findMany({
         where: { userId: user.id },
       }),
+      prisma.project.findMany({
+        where: { userId: user.id },
+      }),
     ]);
 
     // Calculate totals
     const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
+    const projectRevenue = projects.filter(project => project.status === 'completed').reduce((sum, project) => sum + ((project.budget || 0) - (project.cost || 0)), 0);
+    const totalIncomeWithRevenue = totalIncome + projectRevenue;
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalPayables = payables.reduce((sum, payable) => sum + (payable.isPaid ? 0 : payable.amount), 0);
     const totalReceivables = receivables.reduce((sum, receivable) => sum + (receivable.isReceived ? 0 : receivable.amount), 0);
+
+    // Calculate project statistics
+    const totalProjects = projects.length;
+    const activeProjects = projects.filter(project => project.status === 'in-progress').length;
+    const completedProjects = projects.filter(project => project.status === 'completed').length;
+    const planningProjects = projects.filter(project => project.status === 'planning').length;
+    const dueProjects = projects.filter(project => project.status === 'due').length;
+    const totalProjectBudget = projects.filter(project => project.status !== 'completed').reduce((sum, project) => sum + (project.budget || 0), 0);
+    const totalProjectCost = projects.reduce((sum, project) => sum + (project.cost || 0), 0);
+    const totalProjectRevenue = projects.filter(project => project.status === 'completed').reduce((sum, project) => sum + ((project.budget || 0) - (project.cost || 0)), 0);
+    const totalProjectPaidAmount = projects.reduce((sum, project) => sum + (project.paidAmount || 0), 0);
 
     // Get monthly data for the last 6 months
     const today = new Date();
@@ -80,7 +99,7 @@ export async function GET(request) {
     }
 
     // Combine all transactions and sort by date descending
-    const allTransactions = [
+    const allTransactionsList = [
       ...incomes.map(tx => ({
         ...tx,
         type: 'income',
@@ -102,15 +121,30 @@ export async function GET(request) {
         date: tx.dueDate || tx.createdAt
       })),
     ];
-    allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-    const latestTransactions = allTransactions.slice(0, 5);
+    allTransactionsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latestTransactions = allTransactionsList.slice(0, 5);
+
+    if (allTransactions) {
+      return NextResponse.json({
+        allTransactions: allTransactionsList,
+      });
+    }
 
     return NextResponse.json({
       stats: {
-        totalIncome,
+        totalIncome: totalIncomeWithRevenue,
         totalExpenses,
         totalPayables,
         totalReceivables,
+        totalProjects,
+        activeProjects,
+        completedProjects,
+        planningProjects,
+        dueProjects,
+        totalProjectBudget,
+        totalProjectCost,
+        totalProjectRevenue,
+        totalProjectPaidAmount,
       },
       monthlyData: {
         labels: months,

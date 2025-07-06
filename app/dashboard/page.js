@@ -15,6 +15,15 @@ export default function Dashboard() {
     totalExpenses: 0,
     totalPayables: 0,
     totalReceivables: 0,
+    totalProjects: 0,
+    activeProjects: 0,
+    completedProjects: 0,
+    planningProjects: 0,
+    dueProjects: 0,
+    totalProjectBudget: 0,
+    totalProjectCost: 0,
+    totalProjectRevenue: 0,
+    totalProjectPaidAmount: 0,
   });
 
   const [monthlyData, setMonthlyData] = useState({
@@ -48,6 +57,15 @@ export default function Dashboard() {
         totalExpenses: 0,
         totalPayables: 0,
         totalReceivables: 0,
+        totalProjects: 0,
+        activeProjects: 0,
+        completedProjects: 0,
+        planningProjects: 0,
+        dueProjects: 0,
+        totalProjectBudget: 0,
+        totalProjectCost: 0,
+        totalProjectRevenue: 0,
+        totalProjectPaidAmount: 0,
       });
 
       setMonthlyData({
@@ -361,6 +379,128 @@ export default function Dashboard() {
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 px-6 py-2">
               <div className="text-xs text-green-600/80 dark:text-green-400/80 font-medium">Expected income</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Statistics Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Project Overview</h2>
+            </div>
+            <span className="text-xs font-medium px-2.5 py-1 bg-primary/10 text-primary rounded-full">
+              Project Statistics
+            </span>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Total Projects Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Projects</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.totalProjects}</p>
+                  </div>
+                  <div className="bg-blue-200 dark:bg-blue-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Projects Card */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Projects</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.activeProjects}</p>
+                  </div>
+                  <div className="bg-green-200 dark:bg-green-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Completed Projects Card */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Completed Projects</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.completedProjects}</p>
+                  </div>
+                  <div className="bg-purple-200 dark:bg-purple-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Budget Card */}
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-xl p-6 border border-indigo-200 dark:border-indigo-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Total Budget</p>
+                    <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">${stats.totalProjectBudget.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-indigo-200 dark:bg-indigo-700 rounded-lg p-3">
+                    <CurrencyDollarIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Cost Card */}
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-6 border border-orange-200 dark:border-orange-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Cost</p>
+                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">${stats.totalProjectCost.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-orange-200 dark:bg-orange-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-orange-600 dark:text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Revenue Card */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl p-6 border border-emerald-200 dark:border-emerald-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Project Revenue</p>
+                    <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">${stats.totalProjectRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-emerald-200 dark:bg-emerald-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Paid Amount Card */}
+              <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-xl p-6 border border-teal-200 dark:border-teal-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-teal-600 dark:text-teal-400">Total Paid Amount</p>
+                    <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">${stats.totalProjectPaidAmount.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-teal-200 dark:bg-teal-700 rounded-lg p-3">
+                    <svg className="w-6 h-6 text-teal-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

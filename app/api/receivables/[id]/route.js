@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -48,7 +48,7 @@ export async function PATCH(request, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const data = await request.json();
 
     const user = await prisma.user.findUnique({
@@ -102,7 +102,7 @@ export async function DELETE(request, { params }) {
 
   try {
     // Fix: Properly destructure params after awaiting
-    const id = params.id;
+    const { id } = await params;
     
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },

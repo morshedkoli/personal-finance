@@ -12,6 +12,7 @@ import {
   CalendarIcon, // Add this import for the account/history icon
   UserCircleIcon, // Add this import for the profile icon
   Cog6ToothIcon, // Add this import for the settings icon
+  FolderIcon, // Add this import for the projects icon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Payables', href: '/dashboard/payables', icon: CreditCardIcon },
   { name: 'Receivables', href: '/dashboard/receivables', icon: CurrencyDollarIcon },
   { name: 'Categories', href: '/dashboard/categories', icon: TagIcon },
+  { name: 'Projects', href: '/projects', icon: FolderIcon },
 ];
 
 const accountNavigation = [
@@ -114,7 +116,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           <div className="rounded-lg bg-primary/5 dark:bg-primary/10 p-4">
             <h3 className="text-sm font-medium text-primary mb-2">Need Help?</h3>
             <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">Check our documentation for tips on managing your finances effectively.</p>
-            <a href="#" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+            <a href="/documentation" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
               View Documentation →
             </a>
           </div>
