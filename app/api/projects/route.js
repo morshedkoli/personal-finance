@@ -52,6 +52,7 @@ export async function POST(request) {
     const {
       name,
       description,
+      category,
       status,
       priority,
       startDate,
@@ -102,6 +103,7 @@ export async function POST(request) {
       data: {
         name,
         description,
+        category: category || null,
         status,
         priority,
         startDate: new Date(startDate),

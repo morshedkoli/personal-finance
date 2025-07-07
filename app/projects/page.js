@@ -14,6 +14,7 @@ function ProjectsContent() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [editingPayment, setEditingPayment] = useState(null);
+  const [newPaymentAmount, setNewPaymentAmount] = useState('');
   const [activeTab, setActiveTab] = useState('active');
   const [newProject, setNewProject] = useState({
     name: '',
@@ -26,12 +27,28 @@ function ProjectsContent() {
     agentName: '',
     cost: '',
     phoneNumber: '',
-    paidAmount: ''
+    paidAmount: '',
+    category: ''
   });
+  const [projectCategories, setProjectCategories] = useState([]);
 
   useEffect(() => {
     fetchProjects();
+    fetchProjectCategories();
   }, []);
+
+  const fetchProjectCategories = async () => {
+    try {
+      const response = await fetch('/api/categories');
+      if (response.ok) {
+        const data = await response.json();
+        const projectCats = data.filter(category => category.type === 'project');
+        setProjectCategories(projectCats);
+      }
+    } catch (error) {
+      console.error('Error fetching project categories:', error);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -99,7 +116,8 @@ function ProjectsContent() {
           agentName: '',
           cost: '',
           phoneNumber: '',
-          paidAmount: ''
+          paidAmount: '',
+          category: ''
         });
         setShowCreateForm(false);
         
@@ -331,8 +349,12 @@ function ProjectsContent() {
   const handlePaymentUpdate = async (e) => {
     e.preventDefault();
     try {
+      const newAmount = parseFloat(newPaymentAmount) || 0;
+      const currentPaid = parseFloat(editingPayment.paidAmount) || 0;
+      const totalPaidAmount = currentPaid + newAmount;
+      
       const updateData = {
-        paidAmount: parseFloat(editingPayment.paidAmount) || 0
+        paidAmount: totalPaidAmount
       };
       
       const response = await fetch(`/api/projects/${editingPayment.id}`, {
@@ -348,8 +370,9 @@ function ProjectsContent() {
         fetchProjects();
         setShowPaymentForm(false);
         setEditingPayment(null);
+        setNewPaymentAmount('');
         
-        showSuccess(`Payment amount updated to $${updateData.paidAmount.toLocaleString()}!`, {
+        showSuccess(`Payment of $${newAmount.toLocaleString()} added. Total paid: $${totalPaidAmount.toLocaleString()}!`, {
           title: 'Payment Updated'
         });
       } else {
@@ -367,6 +390,7 @@ function ProjectsContent() {
   const openUpdateForm = (project) => {
     if (project.status === 'completed' || project.status === 'due') {
       setEditingPayment(project);
+      setNewPaymentAmount('');
       setShowPaymentForm(true);
     } else {
       setEditingProject(project);
@@ -808,6 +832,22 @@ function ProjectsContent() {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select
+                  value={newProject.category}
+                  onChange={(e) => setNewProject({...newProject, category: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select a category</option>
+                  {projectCategories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Budget ($)</label>
                 <input
                   type="number"
@@ -1167,6 +1207,7 @@ function ProjectsContent() {
                 onClick={() => {
                   setShowPaymentForm(false);
                   setEditingPayment(null);
+                  setNewPaymentAmount('');
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
@@ -1196,9 +1237,9 @@ function ProjectsContent() {
                   ? 'text-red-600 dark:text-red-400' 
                   : 'text-green-600 dark:text-green-400'
               }`}>
-                <p><strong>Total Cost:</strong> ${editingPayment.cost?.toLocaleString()}</p>
+                <p><strong>Total Budget:</strong> ${editingPayment.budget?.toLocaleString()}</p>
                 <p><strong>Current Paid:</strong> ${editingPayment.paidAmount?.toLocaleString()}</p>
-                <p><strong>Remaining:</strong> ${((editingPayment.cost || 0) - (editingPayment.paidAmount || 0)).toLocaleString()}</p>
+                <p><strong>Remaining:</strong> ${((editingPayment.budget || 0) - (editingPayment.paidAmount || 0)).toLocaleString()}</p>
               </div>
             </div>
 
@@ -1209,28 +1250,28 @@ function ProjectsContent() {
                     ? 'text-red-700 dark:text-red-300' 
                     : 'text-green-700 dark:text-green-300'
                 }`}>
-                  Paid Amount ($)
+                  New Payment Amount ($)
                   <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
                     editingPayment.status === 'due'
                       ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                       : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   }`}>
-                    Editable
+                    Add Payment
                   </span>
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
-                  max={editingPayment.cost}
-                  value={editingPayment.paidAmount || ''}
-                  onChange={(e) => setEditingPayment({...editingPayment, paidAmount: parseFloat(e.target.value) || 0})}
+                  max={((editingPayment.budget || 0) - (editingPayment.paidAmount || 0))}
+                  value={newPaymentAmount}
+                  onChange={(e) => setNewPaymentAmount(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg text-gray-900 dark:text-white focus:ring-2 ${
                     editingPayment.status === 'due'
                       ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-red-500 focus:border-red-500'
                       : 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-green-500 focus:border-green-500'
                   }`}
-                  placeholder="Enter paid amount"
+                  placeholder="Enter new payment amount"
                   required
                 />
               </div>
@@ -1241,6 +1282,7 @@ function ProjectsContent() {
                   onClick={() => {
                     setShowPaymentForm(false);
                     setEditingPayment(null);
+                    setNewPaymentAmount('');
                   }}
                   className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >

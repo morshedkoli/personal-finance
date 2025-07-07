@@ -19,12 +19,40 @@ export default function History() {
     const fetchTransactions = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/dashboard?allTransactions=true");
-        if (!response.ok) {
+        // Fetch regular transactions
+        const [transactionsResponse, paymentHistoryResponse] = await Promise.all([
+          fetch("/api/dashboard?allTransactions=true"),
+          fetch("/api/payment-history")
+        ]);
+        
+        if (!transactionsResponse.ok || !paymentHistoryResponse.ok) {
           throw new Error("Failed to fetch transactions");
         }
-        const data = await response.json();
-        setTransactions(data.allTransactions || []);
+        
+        const transactionsData = await transactionsResponse.json();
+        const paymentHistoryData = await paymentHistoryResponse.json();
+        
+        // Transform payment history to match transaction format
+        const paymentTransactions = paymentHistoryData.map(payment => ({
+          id: payment.id,
+          type: 'project',
+          subType: 'payment',
+          name: `Payment: ${payment.project.name}`,
+          description: payment.description,
+          amount: payment.amount,
+          date: payment.paymentDate,
+          projectName: payment.project.name,
+          previousTotal: payment.previousTotal,
+          newTotal: payment.newTotal
+        }));
+        
+        // Combine all transactions
+        const allTransactions = [
+          ...(transactionsData.allTransactions || []),
+          ...paymentTransactions
+        ];
+        
+        setTransactions(allTransactions);
       } catch (err) {
         setError(err.message);
         showError('Failed to load transaction history. Please check your connection and try again.');
@@ -247,6 +275,11 @@ export default function History() {
                         {tx.description && (
                           <div className="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate max-w-xs">
                             {tx.description}
+                          </div>
+                        )}
+                        {tx.type === 'project' && tx.subType === 'payment' && (
+                          <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                            Previous: ${tx.previousTotal?.toLocaleString()} → New: ${tx.newTotal?.toLocaleString()}
                           </div>
                         )}
                       </td>

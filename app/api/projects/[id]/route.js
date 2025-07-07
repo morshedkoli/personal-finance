@@ -60,6 +60,7 @@ export async function PUT(request, { params }) {
     const {
       name,
       description,
+      category,
       status,
       priority,
       startDate,
@@ -88,6 +89,7 @@ export async function PUT(request, { params }) {
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
     if (status !== undefined) updateData.status = status;
     if (priority !== undefined) updateData.priority = priority;
     if (startDate !== undefined) updateData.startDate = new Date(startDate);
@@ -100,10 +102,46 @@ export async function PUT(request, { params }) {
     if (progress !== undefined) updateData.progress = parseInt(progress);
     if (incomeGenerated !== undefined) updateData.incomeGenerated = incomeGenerated;
 
-    const project = await prisma.project.update({
-      where: { id: id },
-      data: updateData
-    });
+    // Check if paidAmount is being updated to create payment history
+    const isPaymentUpdate = paidAmount !== undefined && parseFloat(paidAmount) !== existingProject.paidAmount;
+    
+    let project;
+    if (isPaymentUpdate) {
+      // Use transaction to update project and create payment history atomically
+      const result = await prisma.$transaction(async (tx) => {
+        // Update the project
+        const updatedProject = await tx.project.update({
+          where: { id: id },
+          data: updateData
+        });
+
+        // Calculate payment details
+        const previousTotal = existingProject.paidAmount;
+        const newTotal = parseFloat(paidAmount);
+        const paymentAmount = newTotal - previousTotal;
+
+        // Create payment history record
+        await tx.paymentHistory.create({
+          data: {
+            amount: paymentAmount,
+            previousTotal: previousTotal,
+            newTotal: newTotal,
+            description: `Payment update: ${existingProject.name}`,
+            projectId: id,
+            userId: user.id
+          }
+        });
+
+        return updatedProject;
+      });
+      project = result;
+    } else {
+      // Regular update without payment history
+      project = await prisma.project.update({
+        where: { id: id },
+        data: updateData
+      });
+    }
 
     return NextResponse.json(project);
   } catch (error) {

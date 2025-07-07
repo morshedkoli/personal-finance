@@ -139,6 +139,7 @@ export default function CategoriesPage() {
               >
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
+                <option value="project">Project</option>
               </select>
             </div>
             <div>
@@ -184,29 +185,38 @@ export default function CategoriesPage() {
         {/* Categories List */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="mb-4">
-            <div className="border-b border-gray-200 dark:border-gray-700">
-              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                <button
-                  onClick={() => setActiveTab('income')}
-                  className={`${activeTab === 'income'
-                    ? 'border-primary text-primary dark:text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Income
-                </button>
-                <button
-                  onClick={() => setActiveTab('expense')}
-                  className={`${activeTab === 'expense'
-                    ? 'border-primary text-primary dark:text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Expense
-                </button>
-              </nav>
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                  <button
+                    onClick={() => setActiveTab('income')}
+                    className={`${activeTab === 'income'
+                      ? 'border-primary text-primary dark:text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Income
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('expense')}
+                    className={`${activeTab === 'expense'
+                      ? 'border-primary text-primary dark:text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Expense
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('project')}
+                    className={`${activeTab === 'project'
+                      ? 'border-primary text-primary dark:text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Project
+                  </button>
+                </nav>
+              </div>
             </div>
-          </div>
 
           {isLoading && !categories.length ? (
             <div className="py-8 flex justify-center">

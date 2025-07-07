@@ -571,7 +571,7 @@ export default function Dashboard() {
                 const typeStyle = getTypeStyles(tx.type);
                 
                 return (
-                  <li key={tx.id || idx} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150">
+                  <li key={tx.id || idx} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={`${typeStyle.bgColor} p-2 rounded-lg ${typeStyle.textColor}`}>
@@ -598,8 +598,8 @@ export default function Dashboard() {
           )}
           
           {latestTransactions.length > 0 && (
-            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-750 border-t border-gray-100 dark:border-gray-700">
-              <a href="#" className="text-primary text-sm font-medium hover:text-primary/80 transition-colors flex items-center justify-center">
+            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-700">
+              <a href="/history" className="text-primary text-sm font-medium hover:text-primary/80 transition-colors flex items-center justify-center">
                 View all transactions
               </a>
             </div>
