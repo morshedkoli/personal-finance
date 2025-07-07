@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import FinanceForm from '@/components/forms/FinanceForm';
 import DataTable from '@/components/tables/DataTable';
-import { ArrowPathIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/react/24/solid';
+import { useNotification } from '@/components/notifications/NotificationProvider';
 
 export default function ReceivablesPage() {
   const [receivables, setReceivables] = useState([]);
@@ -12,6 +13,7 @@ export default function ReceivablesPage() {
   const [isDeleting, setIsDeleting] = useState(null);
   const [isUpdating, setIsUpdating] = useState(null);
   const [error, setError] = useState(null);
+  const { showSuccess, showError } = useNotification();
 
   useEffect(() => {
     fetchReceivables();
@@ -123,6 +125,40 @@ export default function ReceivablesPage() {
     }
   };
 
+  // Export function
+  const exportToCSV = () => {
+    if (receivables.length === 0) {
+      showError('No receivables data to export', { title: 'Export Failed' });
+      return;
+    }
+
+    const headers = ['Due Date', 'Name', 'Description', 'Amount', 'Status'];
+    const csvContent = [
+      headers.join(','),
+      ...receivables.map(receivable => [
+        new Date(receivable.dueDate).toLocaleDateString(),
+        `"${receivable.name.replace(/"/g, '""')}"`,
+        `"${receivable.description.replace(/"/g, '""')}"`,
+        receivable.amount,
+        receivable.isReceived ? 'Received' : 'Pending'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `receivables-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccess(`Receivables report exported successfully (${receivables.length} records)`, {
+      title: 'Export Complete'
+    });
+  };
+
   // Calculate statistics
   const totalReceivables = receivables.reduce((sum, r) => sum + Number(r.amount), 0);
   const receivedReceivables = receivables.filter(r => r.isReceived).reduce((sum, r) => sum + Number(r.amount), 0);
@@ -148,7 +184,18 @@ export default function ReceivablesPage() {
           </button>
         </div>
         
-        {/* Statistics Cards - Moved to top */}
+        {/* Export Report Button */}
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={exportToCSV}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <DocumentArrowDownIcon className="-ml-1 mr-2 h-5 w-5" />
+            Export Report
+          </button>
+        </div>
+
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {/* Total Receivables Card */}
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 overflow-hidden shadow-lg rounded-xl text-white">
@@ -200,44 +247,15 @@ export default function ReceivablesPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Add Receivable Form */}
-          <div>
-            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Receivable</h2>
-                <FinanceForm 
-                  type="receivable" 
-                  onSubmit={handleSubmit} 
-                  isSubmitting={isSubmitting} 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Use these actions to manage your receivables efficiently.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    onClick={fetchReceivables}
-                  >
-                    Refresh Data
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  >
-                    Export Report
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Add Receivable Form */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Receivable</h2>
+            <FinanceForm 
+              type="receivable" 
+              onSubmit={handleSubmit} 
+              isSubmitting={isSubmitting} 
+            />
           </div>
         </div>
 

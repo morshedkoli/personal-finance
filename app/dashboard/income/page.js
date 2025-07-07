@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowPathIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import FinanceForm from '@/components/forms/FinanceForm';
 import DataTable from '@/components/tables/DataTable';
 import { useNotification } from '@/components/notifications/NotificationProvider';
@@ -102,6 +102,39 @@ export default function IncomePage() {
     }
   };
 
+  // Export function
+  const exportToCSV = () => {
+    if (incomes.length === 0) {
+      showError('No income data to export', { title: 'Export Failed' });
+      return;
+    }
+
+    const headers = ['Date', 'Description', 'Category', 'Amount'];
+    const csvContent = [
+      headers.join(','),
+      ...incomes.map(income => [
+        new Date(income.date).toLocaleDateString(),
+        `"${income.description.replace(/"/g, '""')}"`,
+        `"${income.category.replace(/"/g, '""')}"`,
+        income.amount
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `income-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccess(`Income report exported successfully (${incomes.length} records)`, {
+      title: 'Export Complete'
+    });
+  };
+
   // Calculate statistics
   const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount), 0);
   const thisMonthIncome = incomes
@@ -132,7 +165,18 @@ export default function IncomePage() {
           </button>
         </div>
 
-        {/* Statistics Cards - Moved to top */}
+        {/* Export Report Button */}
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={exportToCSV}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <DocumentArrowDownIcon className="-ml-1 mr-2 h-5 w-5" />
+            Export Report
+          </button>
+        </div>
+
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {/* Total Income Card */}
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 overflow-hidden shadow-lg rounded-xl text-white">
@@ -184,41 +228,11 @@ export default function IncomePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Add Income Form */}
-          <div>
-            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Income</h2>
-                <FinanceForm type="income" onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Use these actions to manage your income efficiently.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    onClick={fetchIncomes}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  >
-                    Export Report
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Add Income Form */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Income</h2>
+            <FinanceForm type="income" onSubmit={handleSubmit} isSubmitting={isSubmitting} />
           </div>
         </div>
 

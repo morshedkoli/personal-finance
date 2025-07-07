@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowPathIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import FinanceForm from '@/components/forms/FinanceForm';
 import DataTable from '@/components/tables/DataTable';
 import { useNotification } from '@/components/notifications/NotificationProvider';
@@ -102,6 +102,39 @@ export default function ExpensesPage() {
     }
   };
 
+  // Export function
+  const exportToCSV = () => {
+    if (expenses.length === 0) {
+      showError('No expense data to export', { title: 'Export Failed' });
+      return;
+    }
+
+    const headers = ['Date', 'Description', 'Category', 'Amount'];
+    const csvContent = [
+      headers.join(','),
+      ...expenses.map(expense => [
+        new Date(expense.date).toLocaleDateString(),
+        `"${expense.description.replace(/"/g, '""')}"`,
+        `"${expense.category.replace(/"/g, '""')}"`,
+        expense.amount
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `expenses-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccess(`Expenses report exported successfully (${expenses.length} records)`, {
+      title: 'Export Complete'
+    });
+  };
+
   // Calculate statistics
   const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   const thisMonthExpenses = expenses
@@ -146,7 +179,18 @@ export default function ExpensesPage() {
           </button>
         </div>
 
-        {/* Statistics Cards - Moved to top */}
+        {/* Export Report Button */}
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={exportToCSV}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <DocumentArrowDownIcon className="-ml-1 mr-2 h-5 w-5" />
+            Export Report
+          </button>
+        </div>
+
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {/* Total Expenses Card */}
           <div className="bg-gradient-to-br from-red-500 to-red-600 overflow-hidden shadow-lg rounded-xl text-white">
@@ -198,41 +242,11 @@ export default function ExpensesPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Add Expense Form */}
-          <div>
-            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Expense</h2>
-                <FinanceForm type="expense" onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Use these actions to manage your expenses efficiently.
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    onClick={fetchExpenses}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Refreshing...' : 'Refresh Data'}
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  >
-                    Export Report
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Add Expense Form */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Add New Expense</h2>
+            <FinanceForm type="expense" onSubmit={handleSubmit} isSubmitting={isSubmitting} />
           </div>
         </div>
 
