@@ -495,7 +495,7 @@ function ProjectsContent() {
       <ProjectHeader 
         projects={projects}
         projectStats={projectStats}
-        onNewProject={() => setShowCreateForm(true)}
+        onCreateProject={() => setShowCreateForm(true)}
       />
 
 
